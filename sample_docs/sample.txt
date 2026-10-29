@@ -1,0 +1,5 @@
+Engineering Infrastructure Handbook:
+Section 1.1 Maintenance Windows:
+Scheduled cluster maintenance occurs every Tuesday at 02:00 UTC.
+Rolling restarts are completed within 15 minutes per zone.
+Emergency patches bypass the change advisory board if two principal engineers approve.

@@ -1,0 +1,30 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Environment and secrets
+.env
+*.env.local
+
+# Databases & local user data
+data/rag.db*
+data/uploads/*
+!data/uploads/.gitkeep
+
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor settings
+.vscode/
+.idea/
+*.swp

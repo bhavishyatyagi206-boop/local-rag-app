@@ -1,0 +1,178 @@
+[
+  {
+    "id": 1,
+    "question": "When does scheduled cluster maintenance occur?",
+    "expected_docs": ["sample.txt"],
+    "expected_page": 1,
+    "expected_keywords": ["tuesday", "02:00", "utc"],
+    "is_answerable": true
+  },
+  {
+    "id": 2,
+    "question": "How long do rolling restarts take per zone?",
+    "expected_docs": ["sample.txt"],
+    "expected_page": 1,
+    "expected_keywords": ["15 minutes"],
+    "is_answerable": true
+  },
+  {
+    "id": 3,
+    "question": "Who must approve emergency patches to bypass CAB?",
+    "expected_docs": ["sample.txt"],
+    "expected_page": 1,
+    "expected_keywords": ["two principal engineers"],
+    "is_answerable": true
+  },
+  {
+    "id": 4,
+    "question": "What is the automatic failover SLA for the primary database?",
+    "expected_docs": ["sample.docx"],
+    "expected_page": 1,
+    "expected_keywords": ["30 seconds", "heartbeat loss"],
+    "is_answerable": true
+  },
+  {
+    "id": 5,
+    "question": "How do primary PostgreSQL instances replicate to read-replicas?",
+    "expected_docs": ["sample.docx"],
+    "expected_page": 1,
+    "expected_keywords": ["write-ahead logs", "two read-replicas"],
+    "is_answerable": true
+  },
+  {
+    "id": 6,
+    "question": "What data durability SLA is guaranteed under synchronous replication mode?",
+    "expected_docs": ["sample.docx"],
+    "expected_page": 1,
+    "expected_keywords": ["zero data loss", "rpo = 0"],
+    "is_answerable": true
+  },
+  {
+    "id": 7,
+    "question": "When was the Mars 2020 mission launched?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 1,
+    "expected_keywords": ["july 30, 2020"],
+    "is_answerable": true
+  },
+  {
+    "id": 8,
+    "question": "What launch vehicle carried the Mars 2020 mission?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 1,
+    "expected_keywords": ["atlas v"],
+    "is_answerable": true
+  },
+  {
+    "id": 9,
+    "question": "Where did the Mars 2020 mission launch from?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 1,
+    "expected_keywords": ["cape canaveral"],
+    "is_answerable": true
+  },
+  {
+    "id": 10,
+    "question": "What does the MOXIE instrument produce on Mars?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 2,
+    "expected_keywords": ["oxygen", "carbon dioxide"],
+    "is_answerable": true
+  },
+  {
+    "id": 11,
+    "question": "What oxygen production rate did MOXIE achieve during test cycles?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 2,
+    "expected_keywords": ["12 grams per hour"],
+    "is_answerable": true
+  },
+  {
+    "id": 12,
+    "question": "What antenna size does the Deep Space Network utilize?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 3,
+    "expected_keywords": ["70-meter", "parabolic dish"],
+    "is_answerable": true
+  },
+  {
+    "id": 13,
+    "question": "Where are the Deep Space Network antennas located?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 3,
+    "expected_keywords": ["goldstone", "madrid", "canberra"],
+    "is_answerable": true
+  },
+  {
+    "id": 14,
+    "question": "What launch site in Florida was used for Atlas V?",
+    "expected_docs": ["sample.pdf"],
+    "expected_page": 1,
+    "expected_keywords": ["cape canaveral air force station"],
+    "is_answerable": true
+  },
+  {
+    "id": 15,
+    "question": "How many read-replicas receive write-ahead logs across availability zones?",
+    "expected_docs": ["sample.docx"],
+    "expected_page": 1,
+    "expected_keywords": ["two read-replicas"],
+    "is_answerable": true
+  },
+  {
+    "id": 16,
+    "question": "What day of the week is cluster maintenance scheduled?",
+    "expected_docs": ["sample.txt"],
+    "expected_page": 1,
+    "expected_keywords": ["tuesday"],
+    "is_answerable": true
+  },
+  {
+    "id": 17,
+    "question": "What was the GDP of France in the 18th century?",
+    "expected_docs": [],
+    "expected_page": null,
+    "expected_keywords": [],
+    "is_answerable": false
+  },
+  {
+    "id": 18,
+    "question": "How do you cook authentic Neapolitan pizza?",
+    "expected_docs": [],
+    "expected_page": null,
+    "expected_keywords": [],
+    "is_answerable": false
+  },
+  {
+    "id": 19,
+    "question": "What is the speed of light in vacuum?",
+    "expected_docs": [],
+    "expected_page": null,
+    "expected_keywords": [],
+    "is_answerable": false
+  },
+  {
+    "id": 20,
+    "question": "Who won the FIFA World Cup in 1998?",
+    "expected_docs": [],
+    "expected_page": null,
+    "expected_keywords": [],
+    "is_answerable": false
+  },
+  {
+    "id": 21,
+    "question": "What is the treatment protocol for feline leukemia virus?",
+    "expected_docs": [],
+    "expected_page": null,
+    "expected_keywords": [],
+    "is_answerable": false
+  },
+  {
+    "id": 22,
+    "question": "What are the quarterly financial earnings of Tesla?",
+    "expected_docs": [],
+    "expected_page": null,
+    "expected_keywords": [],
+    "is_answerable": false
+  }
+]
