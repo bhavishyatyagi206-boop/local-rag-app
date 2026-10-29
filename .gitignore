@@ -28,3 +28,4 @@ data/uploads/*
 .vscode/
 .idea/
 *.swp
+bin/
