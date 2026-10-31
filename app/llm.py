@@ -69,15 +69,36 @@ class LLMClient:
         retrieved_chunks: List[Tuple[Chunk, float]],
     ) -> Tuple[str, str, str]:
         """Grounded extractive answer without hallucination."""
-        best_chunk, top_score = retrieved_chunks[0]
-        sentences = [s.strip() for s in best_chunk.text.split("\n") if s.strip()]
-        if not sentences:
-            sentences = [best_chunk.text]
+        import re
+        from ragcore import _tokenize, STOP_WORDS
 
-        answer = (
-            f"**[Extractive Mode]** Grounded answer from **{best_chunk.doc_name}** (Page {best_chunk.page_number}):\n\n"
-            f"> \"{best_chunk.text.strip()}\""
-        )
+        best_chunk, top_score = retrieved_chunks[0]
+
+        q_tokens = set(_tokenize(query)) - STOP_WORDS
+        if not q_tokens:
+            q_tokens = set(_tokenize(query))
+
+        raw_sentences = [s.strip() for s in re.split(r"(?<=[.!?\n])\s+", best_chunk.text) if s.strip()]
+        scored_sentences = []
+        for sent in raw_sentences:
+            s_tokens = set(_tokenize(sent))
+            overlap = len(q_tokens.intersection(s_tokens))
+            if overlap > 0:
+                scored_sentences.append((sent, overlap))
+
+        if scored_sentences:
+            scored_sentences.sort(key=lambda x: x[1], reverse=True)
+            best_sentence = scored_sentences[0][0]
+            answer = (
+                f"**[Extractive Mode]** Grounded answer from **{best_chunk.doc_name}** (Page {best_chunk.page_number}):\n\n"
+                f"> \"{best_sentence}\"\n\n"
+                f"*(Full excerpt available in citations below)*"
+            )
+        else:
+            answer = (
+                f"**[Extractive Mode]** Grounded answer from **{best_chunk.doc_name}** (Page {best_chunk.page_number}):\n\n"
+                f"> \"{best_chunk.text.strip()}\""
+            )
         return answer, "extractive", "extractive"
 
     def _call_ollama(
@@ -91,11 +112,12 @@ class LLMClient:
         )
 
         prompt = (
-            "You are a local RAG assistant. Answer the user question accurately using ONLY "
-            "the provided excerpts. If the excerpts do not contain the answer, say "
+            "You are an intelligent, helpful RAG assistant. Answer the user's question clearly, accurately, "
+            "and directly based ONLY on the following source excerpts. Provide a complete, natural response. "
+            "If the provided excerpts do not contain enough information to answer the question, state: "
             "'The provided documents do not contain information to answer this question.'\n\n"
-            f"Context:\n{context_str}\n\n"
-            f"Question: {query}\n\n"
+            f"Context Excerpts:\n{context_str}\n\n"
+            f"User Question: {query}\n\n"
             "Answer:"
         )
 

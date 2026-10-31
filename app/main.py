@@ -104,6 +104,20 @@ def health_check():
     )
 
 
+@app.post("/settings/provider")
+def update_provider(payload: Dict[str, Any]):
+    provider = payload.get("provider", "ollama").lower()
+    model = payload.get("model", "llama3.2")
+    settings.LLM_PROVIDER = provider
+    settings.LLM_MODEL = model
+    kb_manager.llm = LLMClient(provider=provider, model=model)
+    return {
+        "status": "updated",
+        "provider": settings.LLM_PROVIDER,
+        "model": settings.LLM_MODEL if settings.LLM_PROVIDER != "extractive" else "extractive",
+    }
+
+
 # ------------------ Knowledge Bases ------------------
 
 @app.post("/kbs", response_model=KnowledgeBaseResponse, status_code=status.HTTP_201_CREATED)

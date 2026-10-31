@@ -22,7 +22,7 @@ class Settings:
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
 
     # LLM Settings
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "extractive").lower()
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama").lower()
     LLM_MODEL: str = os.getenv("LLM_MODEL", "llama3.2")
     LLM_BASE_URL: str = os.getenv("LLM_BASE_URL", "http://localhost:11434")
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")

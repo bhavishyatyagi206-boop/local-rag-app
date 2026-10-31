@@ -223,9 +223,15 @@
   <!-- Main Panel -->
   <main id="main">
     <header class="chat-header">
-      <div>
+      <div style="display: flex; align-items: center; gap: 12px;">
         <strong id="header-kb-name">No Knowledge Base</strong>
-        <span id="provider-badge" class="badge badge-primary" style="margin-left: 8px;">Extractive</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">MODE:</label>
+          <select id="provider-select" style="padding: 3px 8px; font-size: 11px; border-radius: 4px; font-weight: 600; cursor: pointer;">
+            <option value="ollama">🤖 Ollama (llama3.2 AI)</option>
+            <option value="extractive">📄 Extractive (Direct Evidence)</option>
+          </select>
+        </div>
       </div>
       <div>
         <span id="health-status" class="badge badge-success">Online</span>
@@ -288,7 +294,7 @@
     const queryInput = document.getElementById('query-input');
     const sendBtn = document.getElementById('send-btn');
     const headerKbName = document.getElementById('header-kb-name');
-    const providerBadge = document.getElementById('provider-badge');
+    const providerSelect = document.getElementById('provider-select');
     const themeBtn = document.getElementById('theme-btn');
     const citationDrawer = document.getElementById('citation-drawer');
     const closeDrawerBtn = document.getElementById('close-drawer-btn');
@@ -309,12 +315,31 @@
         const res = await fetch('/health');
         if (res.ok) {
           const data = await res.json();
-          providerBadge.innerText = `Mode: ${data.active_provider}`;
+          if (providerSelect) {
+            providerSelect.value = data.active_provider === 'ollama' ? 'ollama' : 'extractive';
+          }
         }
       } catch (e) {
         document.getElementById('health-status').className = 'badge badge-danger';
         document.getElementById('health-status').innerText = 'Offline';
       }
+    }
+
+    if (providerSelect) {
+      providerSelect.onchange = async () => {
+        try {
+          const res = await fetch('/settings/provider', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: providerSelect.value, model: 'llama3.2' })
+          });
+          if (res.ok) {
+            showToast(`Mode switched to ${providerSelect.value === 'ollama' ? 'Ollama AI (llama3.2)' : 'Extractive Mode'}`, 'success');
+          }
+        } catch(e) {
+          showToast('Failed to switch mode', 'error');
+        }
+      };
     }
 
     // Knowledge Bases
