@@ -47,13 +47,18 @@ class LLMClient:
         Returns (answer_text, provider_name, model_name).
         Raises LLMError on external provider outage or timeout.
         """
-        # If no relevant context retrieved, return a grounded statement
+        # If no relevant context retrieved, answer from general knowledge if LLM is active
         if not retrieved_chunks or all(s <= 0.0 for _, s in retrieved_chunks):
-            return (
-                "No relevant context found in the selected documents for this question.",
-                self.provider,
-                self.model if self.provider != "extractive" else "extractive",
-            )
+            if self.provider == "ollama":
+                return self._call_ollama_general_knowledge(query)
+            elif self.provider in ("openai_compatible", "openai"):
+                return self._call_openai_general_knowledge(query)
+            else:
+                return (
+                    "No relevant context found in the selected documents for this question.",
+                    self.provider,
+                    "extractive",
+                )
 
         if self.provider == "ollama":
             return self._call_ollama(query, retrieved_chunks)
@@ -101,27 +106,7 @@ class LLMClient:
             )
         return answer, "extractive", "extractive"
 
-    def _call_ollama(
-        self,
-        query: str,
-        retrieved_chunks: List[Tuple[Chunk, float]],
-    ) -> Tuple[str, str, str]:
-        context_str = "\n\n---\n\n".join(
-            f"Source: {c.doc_name} (Page {c.page_number})\nExcerpt: {c.text}"
-            for c, _ in retrieved_chunks
-        )
-
-        prompt = (
-            "You are an intelligent, helpful RAG assistant. Answer the user's question clearly, accurately, "
-            "and directly based ONLY on the following source excerpts. Provide a complete, natural response. "
-            "If the question asks for a summary or overview of the document, provide a well-structured summary of the key points. "
-            "If the provided excerpts do not contain enough information to answer the question, state: "
-            "'The provided documents do not contain information to answer this question.'\n\n"
-            f"Context Excerpts:\n{context_str}\n\n"
-            f"User Question: {query}\n\n"
-            "Answer:"
-        )
-
+    def _execute_ollama_prompt(self, prompt: str) -> str:
         url = f"{self.base_url}/api/generate"
         payload = {
             "model": self.model,
@@ -129,29 +114,27 @@ class LLMClient:
             "stream": False,
         }
 
-        # Timeout and 1 retry
         last_error = None
         for attempt in range(2):
             try:
-                with httpx.Client(timeout=30.0) as client:
+                with httpx.Client(timeout=45.0) as client:
                     resp = client.post(url, json=payload)
                     if resp.status_code == 200:
                         data = resp.json()
-                        answer_text = data.get("response", "").strip()
-                        return answer_text, "ollama", self.model
+                        return data.get("response", "").strip()
                     else:
                         raise LLMError(
                             f"Ollama returned HTTP {resp.status_code}: {resp.text}",
                             status_code=502,
                         )
-            except httpx.ConnectError as e:
+            except httpx.ConnectError:
                 last_error = LLMError(
                     f"Unable to connect to Ollama at {self.base_url}. Ensure Ollama is running ('ollama serve').",
                     status_code=503,
                 )
-            except httpx.TimeoutException as e:
+            except httpx.TimeoutException:
                 last_error = LLMError(
-                    f"Ollama request timed out after 30 seconds for model '{self.model}'.",
+                    f"Ollama request timed out after 45 seconds for model '{self.model}'.",
                     status_code=504,
                 )
             except LLMError as e:
@@ -164,6 +147,43 @@ class LLMClient:
         if last_error:
             raise last_error
         raise LLMError("Failed to reach Ollama provider.", status_code=503)
+
+    def _call_ollama(
+        self,
+        query: str,
+        retrieved_chunks: List[Tuple[Chunk, float]],
+    ) -> Tuple[str, str, str]:
+        relevant = [(c, s) for c, s in retrieved_chunks if s > 0.0]
+        if not relevant:
+            return self._call_ollama_general_knowledge(query)
+
+        context_str = "\n\n---\n\n".join(
+            f"Source: {c.doc_name} (Page {c.page_number})\nExcerpt: {c.text}"
+            for c, _ in relevant
+        )
+
+        prompt = (
+            "You are an intelligent, helpful AI assistant like ChatGPT or Claude, equipped with knowledge from uploaded documents.\n\n"
+            f"Document Context:\n{context_str}\n\n"
+            f"User Question: {query}\n\n"
+            "Instructions:\n"
+            "- If the question relates to the provided documents, answer thoroughly, accurately, and politely, grounding your response in the document context.\n"
+            "- If the question asks for a summary or overview of the documents, provide a well-structured summary.\n"
+            "- If the question is partially covered or asks something related, combine the excerpts with your general knowledge to provide the most helpful, complete answer.\n\n"
+            "Answer:"
+        )
+        answer = self._execute_ollama_prompt(prompt)
+        return answer, "ollama", self.model
+
+    def _call_ollama_general_knowledge(self, query: str) -> Tuple[str, str, str]:
+        prompt = (
+            "You are a helpful, intelligent, knowledgeable, and polite AI assistant like ChatGPT or Claude.\n"
+            "Answer the user's question clearly, comprehensively, and accurately.\n\n"
+            f"User Question: {query}\n\n"
+            "Answer:"
+        )
+        answer = self._execute_ollama_prompt(prompt)
+        return answer, "ollama", self.model
 
     def _call_openai_compatible(
         self,
@@ -234,3 +254,37 @@ class LLMClient:
         if last_error:
             raise last_error
         raise LLMError("Failed to reach LLM provider.", status_code=503)
+
+    def _call_openai_general_knowledge(self, query: str) -> Tuple[str, str, str]:
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a helpful, intelligent, knowledgeable AI assistant like ChatGPT or Claude.",
+            },
+            {
+                "role": "user",
+                "content": query,
+            },
+        ]
+        url = f"{self.base_url}/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0.5,
+        }
+
+        try:
+            with httpx.Client(timeout=30.0) as client:
+                resp = client.post(url, headers=headers, json=payload)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    answer_text = data["choices"][0]["message"]["content"].strip()
+                    return answer_text, "openai_compatible", self.model
+                else:
+                    raise LLMError(f"OpenAI error: {resp.text}", status_code=502)
+        except Exception as e:
+            raise LLMError(f"OpenAI error: {e}", status_code=502)

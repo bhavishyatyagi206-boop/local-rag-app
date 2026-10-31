@@ -301,7 +301,7 @@ class KnowledgeBaseManager:
             })
 
         has_relevant = any(score > 0.0 for _, score in retrieved_chunks)
-        status_val = "answered" if has_relevant else "no_relevant_context"
+        status_val = "answered" if (has_relevant or self.llm.provider != "extractive") else "no_relevant_context"
 
         return {
             "answer": answer,
