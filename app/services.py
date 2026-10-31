@@ -17,6 +17,15 @@ from app.llm import LLMClient, LLMError
 from ragcore import Chunk, IngestError, KnowledgeBase, chunk_text, extract
 
 
+SUMMARY_TRIGGERS = (
+    "summary", "summarize", "overview", "what is this document",
+    "what is the document", "explain this document", "about this document",
+    "tell me about this document", "what does this document", "what is in this document",
+    "what is this file", "what is the pdf", "what is this pdf", "main points",
+    "brief this", "what is it about"
+)
+
+
 class IngestionValidationError(Exception):
     def __init__(self, message: str, status_code: int = 400):
         super().__init__(message)
@@ -249,6 +258,21 @@ class KnowledgeBaseManager:
 
         retrieval_start = time.time()
         retrieved_chunks = kb.retrieve(query=query, top_k=top_k, doc_ids=doc_ids)
+
+        # Handle summary/overview requests gracefully
+        q_clean = query.lower().strip()
+        if any(trig in q_clean for trig in SUMMARY_TRIGGERS) and (not retrieved_chunks or all(s <= 0.0 for _, s in retrieved_chunks)):
+            allowed_docs = set(doc_ids) if doc_ids is not None else None
+            summary_chunks = []
+            for c in kb.chunks:
+                if allowed_docs is not None and c.doc_id not in allowed_docs:
+                    continue
+                summary_chunks.append((c, 1.0))
+                if len(summary_chunks) >= top_k:
+                    break
+            if summary_chunks:
+                retrieved_chunks = summary_chunks
+
         retrieval_ms = (time.time() - retrieval_start) * 1000
 
         llm_start = time.time()

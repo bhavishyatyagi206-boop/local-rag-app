@@ -114,6 +114,7 @@ class LLMClient:
         prompt = (
             "You are an intelligent, helpful RAG assistant. Answer the user's question clearly, accurately, "
             "and directly based ONLY on the following source excerpts. Provide a complete, natural response. "
+            "If the question asks for a summary or overview of the document, provide a well-structured summary of the key points. "
             "If the provided excerpts do not contain enough information to answer the question, state: "
             "'The provided documents do not contain information to answer this question.'\n\n"
             f"Context Excerpts:\n{context_str}\n\n"
